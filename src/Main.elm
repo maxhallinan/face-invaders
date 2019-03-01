@@ -1,7 +1,9 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Events exposing (onKeyDown)
 import Html
+import Json.Decode
 import String
 import Svg
 import Svg.Attributes
@@ -18,26 +20,134 @@ main =
 
 
 type alias Model =
-    Int
+    { hand : HandState
+    }
+
+
+type alias HandState =
+    { position : Position
+    }
+
+
+type alias Position =
+    { x : Int, y : Int }
 
 
 type Msg
-    = Foo
+    = KeyPress Key
+
+
+type Key
+    = Left
+    | Right
+    | Other
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( 0, Cmd.none )
+    ( { hand = initHandState }
+    , Cmd.none
+    )
+
+
+initHandState : HandState
+initHandState =
+    let
+        x =
+            -- horizontal center
+            (screenWidth // 2) - (handWidth // 2)
+
+        y =
+            -- near the bottom of the screen
+            screenHeight - (handHeight + 6)
+    in
+        { position = { x = x, y = y }
+        }
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Sub.batch
+        [ onKeyDown decodeKey
+        ]
 
 
-update : a -> Model -> ( Model, Cmd Msg )
-update _ model =
-    ( model, Cmd.none )
+decodeKey : Json.Decode.Decoder Msg
+decodeKey =
+    Json.Decode.field "key" Json.Decode.string
+        |> Json.Decode.map (KeyPress << toKey)
+
+
+toKey : String -> Key
+toKey k =
+    case k of
+        "ArrowLeft" ->
+            Left
+
+        "ArrowRight" ->
+            Right
+
+        _ ->
+            Other
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        KeyPress key ->
+            handleKeyPress key model
+
+
+handleKeyPress : Key -> Model -> ( Model, Cmd Msg )
+handleKeyPress key model =
+    let
+        moveBy =
+            15
+    in
+        case key of
+            Left ->
+                ( moveHand (negate moveBy) model
+                , Cmd.none
+                )
+
+            Right ->
+                ( moveHand moveBy model
+                , Cmd.none
+                )
+
+            Other ->
+                ( model, Cmd.none )
+
+
+moveHand : Int -> Model -> Model
+moveHand increase model =
+    let
+        leftEdge =
+            0
+
+        rightEdge =
+            screenWidth - handWidth
+
+        next =
+            model.hand.position.x + increase
+
+        x =
+            if next <= leftEdge then
+                leftEdge
+            else if next >= rightEdge then
+                rightEdge
+            else
+                next
+
+        position =
+            { x = x
+            , y = model.hand.position.y
+            }
+
+        handState =
+            model.hand
+    in
+        { model | hand = { handState | position = position } }
 
 
 view : Model -> Html.Html Msg
@@ -45,9 +155,24 @@ view model =
     screen model
 
 
-screenSize : Int
-screenSize =
+screenHeight : Int
+screenHeight =
     512
+
+
+screenWidth : Int
+screenWidth =
+    704
+
+
+handHeight : Int
+handHeight =
+    51
+
+
+handWidth : Int
+handWidth =
+    45
 
 
 pixelSize : Int
@@ -59,20 +184,15 @@ screen : Model -> Html.Html Msg
 screen model =
     Svg.svg
         [ Svg.Attributes.style "background-color: #f1f1f1; border: 3px solid #333"
-        , Svg.Attributes.height (String.fromInt screenSize)
-        , Svg.Attributes.width (String.fromInt (screenSize + 192))
+        , Svg.Attributes.height (String.fromInt screenHeight)
+        , Svg.Attributes.width (String.fromInt screenWidth)
         ]
-        [ Svg.g [] <| spriteGraphic finger { x = 6, y = 6 }
-        , Svg.g [] <| spriteGraphic face { x = 100, y = 6 }
+        [ Svg.g [] <| spriteGraphic hand model.hand.position
         ]
 
 
 
 -- Sprites
-
-
-type alias Position =
-    { x : Int, y : Int }
 
 
 type alias Grid a =
@@ -119,8 +239,8 @@ pixelGrid =
     mapGrid intToPixel
 
 
-finger : Sprite
-finger =
+hand : Sprite
+hand =
     pixelGrid
         [ [ 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 ]
         , [ 0, 0, 0, 0, 1, 3, 3, 1, 0, 0, 0, 0, 0, 0, 0 ]
