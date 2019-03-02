@@ -1,4 +1,4 @@
-module Hand exposing (Hand, height, init, move, sprite, toSvg, width)
+module Hand exposing (Direction(..), Hand, animate, height, init, move, sprite, toSvg, width)
 
 import Screen exposing (Position)
 import Sprite exposing (Sprite)
@@ -6,7 +6,15 @@ import Svg exposing (Svg)
 
 
 type alias Hand =
-    { position : Position }
+    { direction : Direction
+    , position : Position
+    }
+
+
+type Direction
+    = Left
+    | Right
+    | Stop
 
 
 init : Hand
@@ -20,7 +28,8 @@ init =
             -- near the bottom of the screen
             Screen.height - (height + 6)
     in
-        { position = { x = x, y = y }
+        { direction = Stop
+        , position = { x = x, y = y }
         }
 
 
@@ -62,8 +71,40 @@ toSvg =
     Sprite.toSvg sprite
 
 
-move : Int -> Hand -> Hand
-move amount hand =
+move : Direction -> Hand -> Hand
+move direction hand =
+    { hand | direction = direction }
+
+
+animate : Hand -> Hand
+animate hand =
+    let
+        amount =
+            15
+    in
+        case hand.direction of
+            Stop ->
+                hand
+
+            Left ->
+                { hand
+                    | position =
+                        increaseXPositionBy
+                            (negate amount)
+                            hand.position
+                }
+
+            Right ->
+                { hand
+                    | position =
+                        increaseXPositionBy
+                            amount
+                            hand.position
+                }
+
+
+increaseXPositionBy : Int -> Position -> Position
+increaseXPositionBy amount position =
     let
         leftEdge =
             0
@@ -72,7 +113,7 @@ move amount hand =
             Screen.width - width
 
         next =
-            hand.position.x + amount
+            position.x + amount
 
         x =
             if next <= leftEdge then
@@ -81,10 +122,7 @@ move amount hand =
                 rightEdge
             else
                 next
-
-        position =
-            { x = x
-            , y = hand.position.y
-            }
     in
-        { hand | position = position }
+        { x = x
+        , y = position.y
+        }

@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser
-import Browser.Events exposing (onAnimationFrameDelta, onKeyDown)
+import Browser.Events exposing (onAnimationFrameDelta, onKeyDown, onKeyUp)
 import Html
 import Json.Decode
 import String
@@ -15,6 +15,7 @@ import Hand exposing (Hand)
 import Grid exposing (Grid)
 import Screen exposing (Position)
 import Sprite exposing (Sprite)
+import Time
 import Util exposing (flip)
 
 
@@ -36,8 +37,9 @@ type alias Model =
 
 
 type Msg
-    = KeyPress Key
-    | Animate Float
+    = KeyDown Key
+    | KeyUp Key
+    | Tick Float
 
 
 type Key
@@ -59,15 +61,16 @@ init _ =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ onKeyDown decodeKey
-        , onAnimationFrameDelta Animate
+        [ onKeyDown <| decodeKey KeyDown
+        , onKeyUp <| decodeKey KeyUp
+        , onAnimationFrameDelta Tick
         ]
 
 
-decodeKey : Json.Decode.Decoder Msg
-decodeKey =
+decodeKey : (Key -> Msg) -> Json.Decode.Decoder Msg
+decodeKey msg =
     Json.Decode.field "key" Json.Decode.string
-        |> Json.Decode.map (KeyPress << toKey)
+        |> Json.Decode.map (msg << toKey)
 
 
 toKey : String -> Key
@@ -86,37 +89,56 @@ toKey k =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        KeyPress key ->
-            handleKeyPress key model
+        KeyDown key ->
+            handleKeyDown key model
 
-        Animate _ ->
-            handleAnimate model
+        KeyUp key ->
+            handleKeyUp key model
 
-
-handleKeyPress : Key -> Model -> ( Model, Cmd Msg )
-handleKeyPress key model =
-    let
-        moveAmount =
-            15
-    in
-        case key of
-            Left ->
-                ( { model | hand = Hand.move (negate moveAmount) model.hand }
-                , Cmd.none
-                )
-
-            Right ->
-                ( { model | hand = Hand.move moveAmount model.hand }
-                , Cmd.none
-                )
-
-            Other ->
-                ( model, Cmd.none )
+        Tick timeSinceLastFrame ->
+            handleTick timeSinceLastFrame model
 
 
-handleAnimate : Model -> ( Model, Cmd Msg )
-handleAnimate model =
-    ( { model | faces = Face.Grid.animate model.faces }
+handleKeyDown : Key -> Model -> ( Model, Cmd Msg )
+handleKeyDown key model =
+    case key of
+        Left ->
+            ( { model | hand = Hand.move Hand.Left model.hand }
+            , Cmd.none
+            )
+
+        Right ->
+            ( { model | hand = Hand.move Hand.Right model.hand }
+            , Cmd.none
+            )
+
+        Other ->
+            ( model, Cmd.none )
+
+
+handleKeyUp : Key -> Model -> ( Model, Cmd Msg )
+handleKeyUp key model =
+    case key of
+        Left ->
+            ( { model | hand = Hand.move Hand.Stop model.hand }
+            , Cmd.none
+            )
+
+        Right ->
+            ( { model | hand = Hand.move Hand.Stop model.hand }
+            , Cmd.none
+            )
+
+        Other ->
+            ( model, Cmd.none )
+
+
+handleTick : Float -> Model -> ( Model, Cmd Msg )
+handleTick timeSinceLastFrame model =
+    ( { model
+        | faces = Face.Grid.animate model.faces
+        , hand = Hand.animate model.hand
+      }
     , Cmd.none
     )
 

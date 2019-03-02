@@ -72,7 +72,7 @@ moveFaces : Position -> Position -> Grid Face -> Grid Face
 moveFaces leftMost rightMost faces =
     let
         x =
-            2
+            3
 
         y =
             6
