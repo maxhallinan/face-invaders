@@ -1,12 +1,32 @@
 module Main exposing (main)
 
 import Browser
-import Browser.Events exposing (onKeyDown)
+import Browser.Events exposing (onAnimationFrameDelta, onKeyDown)
 import Html
 import Json.Decode
 import String
 import Svg
 import Svg.Attributes
+import Tuple
+
+
+type alias Hand =
+    { position : Position }
+
+
+type alias Face =
+    { position : Position
+    , direction : FaceDirection
+    }
+
+
+type FaceDirection
+    = FaceLeft
+    | FaceRight
+
+
+type alias Bullet =
+    { position : Position }
 
 
 main : Program () Model Msg
@@ -20,12 +40,9 @@ main =
 
 
 type alias Model =
-    { hand : HandState
-    }
-
-
-type alias HandState =
-    { position : Position
+    { bullets : List Bullet
+    , faces : Grid Face
+    , hand : Hand
     }
 
 
@@ -35,6 +52,7 @@ type alias Position =
 
 type Msg
     = KeyPress Key
+    | Animate Float
 
 
 type Key
@@ -45,13 +63,16 @@ type Key
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { hand = initHandState }
+    ( { bullets = []
+      , faces = initFaces
+      , hand = initHand
+      }
     , Cmd.none
     )
 
 
-initHandState : HandState
-initHandState =
+initHand : Hand
+initHand =
     let
         x =
             -- horizontal center
@@ -65,10 +86,62 @@ initHandState =
         }
 
 
+initFaces : Grid Face
+initFaces =
+    let
+        initFace position =
+            { position = position
+            , direction = FaceRight
+            }
+    in
+        mapGrid initFace initFacePositions
+
+
+initFacePositions : Grid Position
+initFacePositions =
+    let
+        spacing =
+            10
+
+        rowLength =
+            9
+
+        rowWidth =
+            rowLength * (faceWidth + spacing)
+
+        leftOffset =
+            (screenWidth - rowWidth) // 2
+
+        xs =
+            List.range 0 (rowLength - 1)
+                |> List.map ((*) (faceWidth + spacing))
+                -- center in screen
+                |> List.map ((+) leftOffset)
+
+        ys =
+            List.range 0 4
+                |> List.map ((*) (faceHeight + spacing))
+                -- start 6 pixels from the top edge of the screen
+                |> List.map ((+) 6)
+
+        toPairs x =
+            List.map (Tuple.pair x) ys
+
+        positions =
+            List.map toPairs xs
+                |> mapGrid toPosition
+
+        toPosition ( x, y ) =
+            { x = x, y = y }
+    in
+        positions
+
+
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ onKeyDown decodeKey
+        , onAnimationFrameDelta Animate
         ]
 
 
@@ -97,6 +170,9 @@ update msg model =
         KeyPress key ->
             handleKeyPress key model
 
+        Animate _ ->
+            handleAnimate model
+
 
 handleKeyPress : Key -> Model -> ( Model, Cmd Msg )
 handleKeyPress key model =
@@ -106,12 +182,12 @@ handleKeyPress key model =
     in
         case key of
             Left ->
-                ( moveHand (negate moveBy) model
+                ( { model | hand = moveHand (negate moveBy) model.hand }
                 , Cmd.none
                 )
 
             Right ->
-                ( moveHand moveBy model
+                ( { model | hand = moveHand moveBy model.hand }
                 , Cmd.none
                 )
 
@@ -119,8 +195,104 @@ handleKeyPress key model =
                 ( model, Cmd.none )
 
 
-moveHand : Int -> Model -> Model
-moveHand increase model =
+handleAnimate : Model -> ( Model, Cmd Msg )
+handleAnimate model =
+    let
+        sortedFaces =
+            List.concat model.faces
+                |> List.sortBy (.x << .position)
+
+        getPosition =
+            Maybe.map .position << List.head
+
+        leftMost =
+            getPosition sortedFaces
+
+        rightMost =
+            getPosition <| List.reverse sortedFaces
+
+        faces =
+            Maybe.map2 (\l r -> animateFaces l r model.faces) leftMost rightMost
+                |> Maybe.withDefault model.faces
+    in
+        ( { model | faces = faces }, Cmd.none )
+
+
+animateFaces : Position -> Position -> Grid Face -> Grid Face
+animateFaces leftMost rightMost faces =
+    let
+        incX =
+            2
+
+        incY =
+            6
+
+        atLeftEdge =
+            (leftMost.x + (negate incX)) <= 0
+
+        atRightEdge =
+            (rightMost.x + faceWidth + incX) >= screenWidth
+    in
+        if atLeftEdge then
+            reverseFaceDirection faces
+                |> moveFacesY incY
+                |> moveFacesX incX
+        else if atRightEdge then
+            reverseFaceDirection faces
+                |> moveFacesY incY
+                |> moveFacesX incX
+        else
+            moveFacesX incX faces
+
+
+reverseFaceDirection : Grid Face -> Grid Face
+reverseFaceDirection faces =
+    let
+        reverseDirection : Face -> Face
+        reverseDirection face =
+            case face.direction of
+                FaceLeft ->
+                    { face | direction = FaceRight }
+
+                FaceRight ->
+                    { face | direction = FaceLeft }
+    in
+        mapGrid reverseDirection faces
+
+
+moveFacesX : Int -> Grid Face -> Grid Face
+moveFacesX increase faces =
+    let
+        increaseX face =
+            let
+                position =
+                    face.position
+            in
+                case face.direction of
+                    FaceLeft ->
+                        { face | position = { position | x = position.x + (negate increase) } }
+
+                    FaceRight ->
+                        { face | position = { position | x = position.x + increase } }
+    in
+        mapGrid increaseX faces
+
+
+moveFacesY : Int -> Grid Face -> Grid Face
+moveFacesY increase faces =
+    let
+        increaseY face =
+            let
+                position =
+                    face.position
+            in
+                { face | position = { position | y = position.y + increase } }
+    in
+        mapGrid increaseY faces
+
+
+moveHand : Int -> Hand -> Hand
+moveHand moveBy hand =
     let
         leftEdge =
             0
@@ -129,7 +301,7 @@ moveHand increase model =
             screenWidth - handWidth
 
         next =
-            model.hand.position.x + increase
+            hand.position.x + moveBy
 
         x =
             if next <= leftEdge then
@@ -141,13 +313,10 @@ moveHand increase model =
 
         position =
             { x = x
-            , y = model.hand.position.y
+            , y = hand.position.y
             }
-
-        handState =
-            model.hand
     in
-        { model | hand = { handState | position = position } }
+        { hand | position = position }
 
 
 view : Model -> Html.Html Msg
@@ -175,6 +344,16 @@ handWidth =
     45
 
 
+faceWidth : Int
+faceWidth =
+    48
+
+
+faceHeight : Int
+faceHeight =
+    51
+
+
 pixelSize : Int
 pixelSize =
     3
@@ -187,8 +366,24 @@ screen model =
         , Svg.Attributes.height (String.fromInt screenHeight)
         , Svg.Attributes.width (String.fromInt screenWidth)
         ]
-        [ Svg.g [] <| spriteGraphic hand model.hand.position
+        [ handView model.hand.position
+        , Svg.g [] <| List.map (faceView << .position) (List.concat model.faces)
         ]
+
+
+handView : Position -> Html.Html Msg
+handView =
+    Svg.g [] << spriteGraphic handSprite
+
+
+faceView : Position -> Html.Html Msg
+faceView =
+    Svg.g [] << spriteGraphic faceSprite
+
+
+bulletView : Position -> Html.Html Msg
+bulletView =
+    Svg.g [] << spriteGraphic bulletSprite
 
 
 
@@ -239,8 +434,8 @@ pixelGrid =
     mapGrid intToPixel
 
 
-hand : Sprite
-hand =
+handSprite : Sprite
+handSprite =
     pixelGrid
         [ [ 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 ]
         , [ 0, 0, 0, 0, 1, 3, 3, 1, 0, 0, 0, 0, 0, 0, 0 ]
@@ -262,8 +457,8 @@ hand =
         ]
 
 
-face : Sprite
-face =
+faceSprite : Sprite
+faceSprite =
     pixelGrid
         [ [ 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ]
         , [ 0, 0, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0, 0 ]
@@ -285,8 +480,8 @@ face =
         ]
 
 
-bullet : Sprite
-bullet =
+bulletSprite : Sprite
+bulletSprite =
     mapGrid intToPixel
         [ [ 1 ] ]
 
@@ -364,3 +559,8 @@ pixelColor pixel =
 
         Black ->
             "rgba(51,51,51,1)"
+
+
+flip : (a -> b -> c) -> (b -> a -> c)
+flip f x y =
+    f y x
