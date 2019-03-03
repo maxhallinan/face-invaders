@@ -1,4 +1,15 @@
-module Hand exposing (Direction(..), Hand, animate, height, init, move, sprite, toSvg, width)
+module Hand
+    exposing
+        ( Direction(..)
+        , Hand
+        , animate
+        , height
+        , init
+        , move
+        , sprite
+        , toSvg
+        , width
+        )
 
 import Screen exposing (Position)
 import Sprite exposing (Sprite)

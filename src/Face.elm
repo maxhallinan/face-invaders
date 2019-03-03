@@ -1,4 +1,14 @@
-module Face exposing (Face, Direction(..), height, init, reverseDirection, sprite, toSvg, width)
+module Face
+    exposing
+        ( Face
+        , Direction(..)
+        , height
+        , init
+        , reverseDirection
+        , sprite
+        , toSvg
+        , width
+        )
 
 import Grid exposing (Grid)
 import Screen exposing (Position)

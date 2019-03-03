@@ -3,6 +3,7 @@ module Main exposing (main)
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta, onKeyDown, onKeyUp)
 import Html
+import Html.Attributes
 import Json.Decode
 import String
 import Svg
@@ -17,6 +18,7 @@ import Screen exposing (Position)
 import Sprite exposing (Sprite)
 import Time
 import Util exposing (flip)
+import WebGL
 
 
 main : Program () Model Msg
@@ -61,10 +63,14 @@ init _ =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ onKeyDown <| decodeKey KeyDown
-        , onKeyUp <| decodeKey KeyUp
-        , onAnimationFrameDelta Tick
-        ]
+        []
+
+
+
+-- [ onKeyDown <| decodeKey KeyDown
+-- , onKeyUp <| decodeKey KeyUp
+-- , onAnimationFrameDelta Tick
+-- ]
 
 
 decodeKey : (Key -> Msg) -> Json.Decode.Decoder Msg
@@ -145,16 +151,18 @@ handleTick timeSinceLastFrame model =
 
 view : Model -> Html.Html Msg
 view model =
-    screen model
+    renderGame model
 
 
-screen : Model -> Html.Html Msg
-screen model =
-    Svg.svg
-        [ Svg.Attributes.style "background-color: #f1f1f1; border: 3px solid #333"
-        , Svg.Attributes.height (String.fromInt Screen.height)
-        , Svg.Attributes.width (String.fromInt Screen.width)
+renderGame : Model -> Html.Html Msg
+renderGame model =
+    WebGL.toHtmlWith
+        [ WebGL.clearColor 241 241 241 1
+        , WebGL.depth 1
+        , WebGL.stencil 0
         ]
-        [ Hand.toSvg model.hand.position
-        , Svg.g [] <| List.map (Face.toSvg << .position) (List.concat model.faces)
+        [ Html.Attributes.height Screen.height
+        , Html.Attributes.style "border" "3px solid #333"
+        , Html.Attributes.width Screen.width
         ]
+        []
