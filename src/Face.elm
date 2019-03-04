@@ -4,6 +4,7 @@ module Face
         , Face
         , height
         , init
+        , isDead
         , reverseDirection
         , toSvg
         , width
@@ -19,6 +20,7 @@ import Task
 type alias Face =
     { direction : Direction
     , position : Position
+    , health : Health
     }
 
 
@@ -26,12 +28,23 @@ init : Direction -> Position -> Face
 init direction position =
     { direction = direction
     , position = position
+    , health = Alive
     }
 
 
 type Direction
     = Left
     | Right
+
+
+type Health
+    = Alive
+    | Dead
+
+
+isDead : Face -> Bool
+isDead face =
+    face.health == Dead
 
 
 height : Float

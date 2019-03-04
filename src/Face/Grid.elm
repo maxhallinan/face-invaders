@@ -3,6 +3,7 @@ module Face.Grid exposing (animate, init)
 import Face exposing (Face)
 import Grid exposing (Grid)
 import Screen exposing (Position)
+import Util
 
 
 init : Face.Direction -> Grid Face
@@ -34,14 +35,14 @@ init direction =
                 -- start 6 pixels from the top edge of the screen
                 |> List.map ((+) 6)
 
-        toPairs x =
-            List.map (Tuple.pair x) ys
+        toPairs y =
+            List.map (Util.flip Tuple.pair y) xs
 
         toPosition ( x, y ) =
             { x = x, y = y }
 
         positions =
-            List.map toPairs xs
+            List.map toPairs ys
                 |> Grid.map toPosition
     in
     Grid.map (Face.init direction) positions

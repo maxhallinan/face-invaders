@@ -1,5 +1,7 @@
 module Grid exposing (Grid, map)
 
+import Array
+
 
 type alias Grid a =
     List (List a)

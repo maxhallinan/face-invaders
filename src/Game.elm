@@ -2,6 +2,7 @@ module Game
     exposing
         ( Model
         , animate
+        , dropBomb
         , init
         , moveHandLeft
         , moveHandRight
@@ -10,15 +11,17 @@ module Game
         , view
         )
 
+import Array
 import Bullet exposing (Bullet)
 import Face exposing (Face)
 import Face.Grid
 import Grid exposing (Grid)
 import Hand exposing (Hand)
 import Html.Attributes
-import Screen
+import Screen exposing (Position)
 import Svg
 import Svg.Attributes
+import Util
 
 
 type alias Model =
@@ -85,6 +88,41 @@ collectGarbage model =
     { model
         | bullets = List.filter (not << Screen.isOffScreen << .position) model.bullets
     }
+
+
+dropBomb : Int -> Model -> Model
+dropBomb n model =
+    if n < 9 then
+        let
+            bombPosition : Maybe Position
+            bombPosition =
+                getBombPosition n model.faces
+
+            shootDown : Position -> Model -> Model
+            shootDown position m =
+                { m | bullets = Bullet.shootDown position :: m.bullets }
+        in
+        Maybe.map (Util.flip shootDown model) bombPosition
+            |> Maybe.withDefault model
+    else
+        model
+
+
+getBombPosition : Int -> Grid Face -> Maybe Position
+getBombPosition index faces =
+    let
+        toBombOffset : Position -> Position
+        toBombOffset position =
+            -- drop bomb from the horizontal center and bottom of the face
+            { x = position.x + ((Face.width / 2) - (Bullet.width / 2))
+            , y = position.y + Face.height
+            }
+    in
+    List.map (Array.get index << Array.fromList) (List.reverse faces)
+        |> List.filter Util.isJust
+        |> List.head
+        |> Maybe.andThen identity
+        |> Maybe.map (toBombOffset << .position)
 
 
 view : Model -> Svg.Svg a

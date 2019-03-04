@@ -11,6 +11,7 @@ import Hand exposing (Hand)
 import Html
 import Html.Attributes
 import Key exposing (Key)
+import Random
 import Screen exposing (Position)
 import String
 import Svg
@@ -38,6 +39,7 @@ type Msg
     = KeyDown Key
     | KeyUp Key
     | Tick
+    | DiceRoll Int
 
 
 init : ( Model, Cmd Msg )
@@ -65,6 +67,9 @@ update msg model =
 
         Tick ->
             handleTick model
+
+        DiceRoll n ->
+            handleDiceRoll n model
 
 
 view : Model -> Html.Html Msg
@@ -106,4 +111,14 @@ handleKeyUp key model =
 
 handleTick : Model -> ( Model, Cmd Msg )
 handleTick model =
-    ( Game.animate model, Cmd.none )
+    ( Game.animate model, rollDice )
+
+
+handleDiceRoll : Int -> Model -> ( Model, Cmd Msg )
+handleDiceRoll n model =
+    ( Game.dropBomb n model, Cmd.none )
+
+
+rollDice : Cmd Msg
+rollDice =
+    Random.generate DiceRoll <| Random.int 0 560
