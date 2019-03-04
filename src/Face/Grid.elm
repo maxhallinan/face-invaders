@@ -28,7 +28,7 @@ init direction =
                 |> List.map ((+) leftOffset)
 
         ys =
-            List.range 0 4
+            List.range 0 3
                 |> List.map toFloat
                 |> List.map ((*) (Face.height + spacing))
                 -- start 6 pixels from the top edge of the screen
