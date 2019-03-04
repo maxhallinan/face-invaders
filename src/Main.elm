@@ -10,7 +10,7 @@ import Grid exposing (Grid)
 import Hand exposing (Hand)
 import Html
 import Html.Attributes
-import Json.Decode
+import Key exposing (Key)
 import Screen exposing (Position)
 import String
 import Svg
@@ -48,8 +48,8 @@ init =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ onKeyDown <| decodeKey KeyDown
-        , onKeyUp <| decodeKey KeyUp
+        [ onKeyDown <| Key.decode KeyDown
+        , onKeyUp <| Key.decode KeyUp
         , onAnimationFrameDelta <| always Tick
         ]
 
@@ -72,67 +72,35 @@ view model =
     Game.view model
 
 
-type Key
-    = Left
-    | Right
-    | Shoot
-    | Other
-
-
-decodeKey : (Key -> Msg) -> Json.Decode.Decoder Msg
-decodeKey msg =
-    Json.Decode.field "key" Json.Decode.string
-        |> Json.Decode.map (msg << toKey)
-
-
-toKey : String -> Key
-toKey k =
-    case k of
-        "ArrowLeft" ->
-            Left
-
-        "ArrowRight" ->
-            Right
-
-        "Spacebar" ->
-            Shoot
-
-        " " ->
-            Shoot
-
-        _ ->
-            Other
-
-
 handleKeyDown : Key -> Model -> ( Model, Cmd Msg )
 handleKeyDown key model =
     case key of
-        Left ->
+        Key.Left ->
             ( Game.moveHandLeft model, Cmd.none )
 
-        Right ->
+        Key.Right ->
             ( Game.moveHandRight model, Cmd.none )
 
-        Shoot ->
+        Key.Space ->
             ( Game.shootUp model, Cmd.none )
 
-        Other ->
+        Key.Other ->
             ( model, Cmd.none )
 
 
 handleKeyUp : Key -> Model -> ( Model, Cmd Msg )
 handleKeyUp key model =
     case key of
-        Left ->
+        Key.Left ->
             ( Game.stopHand model, Cmd.none )
 
-        Right ->
+        Key.Right ->
             ( Game.stopHand model, Cmd.none )
 
-        Shoot ->
+        Key.Space ->
             ( model, Cmd.none )
 
-        Other ->
+        Key.Other ->
             ( model, Cmd.none )
 
 
