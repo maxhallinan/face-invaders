@@ -1,4 +1,4 @@
-module Bullet exposing (Bullet, sprite)
+module Bullet exposing (Bullet, height, sprite, toSvg, width)
 
 import Screen exposing (Position)
 import Sprite exposing (Sprite)
@@ -7,6 +7,16 @@ import Svg exposing (Svg)
 
 type alias Bullet =
     { position : Position }
+
+
+height : Int
+height =
+    3
+
+
+width : Int
+width =
+    3
 
 
 sprite : Sprite

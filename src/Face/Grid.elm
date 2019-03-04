@@ -72,10 +72,10 @@ moveFaces : Position -> Position -> Grid Face -> Grid Face
 moveFaces leftMost rightMost faces =
     let
         x =
-            3
+            1
 
         y =
-            6
+            3
 
         atLeftEdge =
             (leftMost.x + (negate x)) <= 0
