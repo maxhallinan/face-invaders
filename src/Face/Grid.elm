@@ -1,4 +1,4 @@
-module Face.Grid exposing (init, animate)
+module Face.Grid exposing (animate, init)
 
 import Face exposing (Face)
 import Grid exposing (Grid)
@@ -18,16 +18,18 @@ init direction =
             rowLength * (Face.width + spacing)
 
         leftOffset =
-            (Screen.width - rowWidth) // 2
+            (Screen.width - rowWidth) / 2
 
         xs =
             List.range 0 (rowLength - 1)
+                |> List.map toFloat
                 |> List.map ((*) (Face.width + spacing))
                 -- center in screen
                 |> List.map ((+) leftOffset)
 
         ys =
             List.range 0 4
+                |> List.map toFloat
                 |> List.map ((*) (Face.height + spacing))
                 -- start 6 pixels from the top edge of the screen
                 |> List.map ((+) 6)
@@ -42,7 +44,7 @@ init direction =
             List.map toPairs xs
                 |> Grid.map toPosition
     in
-        Grid.map (Face.init direction) positions
+    Grid.map (Face.init direction) positions
 
 
 animate : Grid Face -> Grid Face
@@ -64,8 +66,8 @@ animate faces =
         move lMost rMost =
             moveFaces lMost rMost faces
     in
-        Maybe.map2 move leftMost rightMost
-            |> Maybe.withDefault faces
+    Maybe.map2 move leftMost rightMost
+        |> Maybe.withDefault faces
 
 
 moveFaces : Position -> Position -> Grid Face -> Grid Face
@@ -78,20 +80,20 @@ moveFaces leftMost rightMost faces =
             3
 
         atLeftEdge =
-            (leftMost.x + (negate x)) <= 0
+            (leftMost.x + negate x) <= 0
 
         atRightEdge =
             (rightMost.x + Face.width + x) >= Screen.width
 
         reverse =
-            (increasePositionBy ( x, y ) << reverseDirection)
+            increasePositionBy ( x, y ) << reverseDirection
     in
-        if atLeftEdge then
-            reverse faces
-        else if atRightEdge then
-            reverse faces
-        else
-            increasePositionBy ( x, 0 ) faces
+    if atLeftEdge then
+        reverse faces
+    else if atRightEdge then
+        reverse faces
+    else
+        increasePositionBy ( x, 0 ) faces
 
 
 reverseDirection : Grid Face -> Grid Face
@@ -99,7 +101,7 @@ reverseDirection faces =
     Grid.map Face.reverseDirection faces
 
 
-increasePositionBy : ( Int, Int ) -> Grid Face -> Grid Face
+increasePositionBy : ( Float, Float ) -> Grid Face -> Grid Face
 increasePositionBy ( x, y ) faces =
     let
         increase : Face -> Face
@@ -108,22 +110,22 @@ increasePositionBy ( x, y ) faces =
                 position =
                     face.position
             in
-                case face.direction of
-                    Face.Left ->
-                        { face
-                            | position =
-                                { x = position.x + (negate x)
-                                , y = position.y + y
-                                }
-                        }
+            case face.direction of
+                Face.Left ->
+                    { face
+                        | position =
+                            { x = position.x + negate x
+                            , y = position.y + y
+                            }
+                    }
 
-                    Face.Right ->
-                        { face
-                            | position =
-                                { position
-                                    | x = position.x + x
-                                    , y = position.y + y
-                                }
-                        }
+                Face.Right ->
+                    { face
+                        | position =
+                            { position
+                                | x = position.x + x
+                                , y = position.y + y
+                            }
+                    }
     in
-        Grid.map increase faces
+    Grid.map increase faces

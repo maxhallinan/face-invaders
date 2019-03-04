@@ -1,15 +1,26 @@
-module Screen exposing (Position, height, width)
+module Screen
+    exposing
+        ( Position
+        , height
+        , isOffScreen
+        , width
+        )
 
 
 type alias Position =
-    { x : Int, y : Int }
+    { x : Float, y : Float }
 
 
-height : Int
+height : Float
 height =
     512
 
 
-width : Int
+width : Float
 width =
     704
+
+
+isOffScreen : Position -> Bool
+isOffScreen { x, y } =
+    x <= 0 || x >= width || y <= 0 || y >= height

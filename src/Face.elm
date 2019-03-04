@@ -1,23 +1,19 @@
 module Face
     exposing
-        ( Face
-        , Direction(..)
+        ( Direction(..)
+        , Face
         , height
         , init
-        , loadTexture
         , reverseDirection
-        , sprite
         , toSvg
         , width
         )
 
 import Grid exposing (Grid)
 import Screen exposing (Position)
-import Sprite exposing (Sprite)
 import Svg exposing (Svg)
 import Svg.Attributes
 import Task
-import WebGL.Texture as Texture exposing (Texture, defaultOptions)
 
 
 type alias Face =
@@ -38,49 +34,14 @@ type Direction
     | Right
 
 
-width : Int
-width =
-    48
-
-
-height : Int
+height : Float
 height =
     51
 
 
-sprite : Sprite
-sprite =
-    Sprite.init
-        [ [ 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ]
-        , [ 0, 0, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0, 0 ]
-        , [ 0, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0 ]
-        , [ 0, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0 ]
-        , [ 0, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0 ]
-        , [ 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1 ]
-        , [ 1, 3, 3, 3, 3, 3, 1, 3, 3, 1, 3, 3, 3, 3, 2, 1 ]
-        , [ 1, 3, 3, 3, 3, 3, 1, 3, 3, 1, 3, 3, 3, 3, 2, 1 ]
-        , [ 1, 3, 3, 3, 3, 3, 1, 3, 3, 1, 3, 3, 3, 3, 2, 1 ]
-        , [ 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1 ]
-        , [ 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1 ]
-        , [ 1, 3, 3, 3, 3, 1, 3, 3, 3, 3, 1, 3, 3, 2, 2, 1 ]
-        , [ 0, 1, 3, 3, 3, 3, 1, 1, 1, 1, 3, 3, 3, 2, 1, 0 ]
-        , [ 0, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0 ]
-        , [ 0, 1, 2, 3, 3, 3, 3, 2, 2, 3, 3, 3, 2, 2, 1, 0 ]
-        , [ 0, 0, 1, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1, 0, 0 ]
-        , [ 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0 ]
-        ]
-
-
-toSvg : Position -> Svg a
-toSvg position =
-    Svg.image
-        [ Svg.Attributes.xlinkHref dataUri
-        , Svg.Attributes.width (String.fromInt width)
-        , Svg.Attributes.height (String.fromInt height)
-        , Svg.Attributes.x (String.fromInt position.x)
-        , Svg.Attributes.y (String.fromInt position.y)
-        ]
-        []
+width : Float
+width =
+    48
 
 
 reverseDirection : Face -> Face
@@ -93,10 +54,16 @@ reverseDirection face =
             { face | direction = Left }
 
 
-loadTexture : (Result Texture.Error Texture.Texture -> msg) -> Cmd msg
-loadTexture msg =
-    Texture.load dataUri
-        |> Task.attempt msg
+toSvg : Position -> Svg a
+toSvg position =
+    Svg.image
+        [ Svg.Attributes.xlinkHref dataUri
+        , Svg.Attributes.width (String.fromFloat width)
+        , Svg.Attributes.height (String.fromFloat height)
+        , Svg.Attributes.x (String.fromFloat position.x)
+        , Svg.Attributes.y (String.fromFloat position.y)
+        ]
+        []
 
 
 dataUri : String
