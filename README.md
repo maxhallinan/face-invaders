@@ -2,6 +2,11 @@
 
 A little [Space Invaders](https://en.wikipedia.org/wiki/Space_Invaders) clone.
 
+**Commands**
+
+- arrows to move
+- space to fire
+
 ## Development
 
 ```bash
