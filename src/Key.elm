@@ -7,6 +7,7 @@ type Key
     = Left
     | Right
     | Space
+    | Enter
     | Other
 
 
@@ -30,6 +31,9 @@ toKey k =
 
         " " ->
             Space
+
+        "Enter" ->
+            Enter
 
         _ ->
             Other

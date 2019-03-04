@@ -70,7 +70,7 @@ shootUp model =
         bullet =
             Bullet.shootUp position
     in
-    { model | bullets = bullet :: model.bullets }
+        { model | bullets = bullet :: model.bullets }
 
 
 animate : Model -> Model
@@ -102,8 +102,8 @@ dropBomb n model =
             shootDown position m =
                 { m | bullets = Bullet.shootDown position :: m.bullets }
         in
-        Maybe.map (Util.flip shootDown model) bombPosition
-            |> Maybe.withDefault model
+            Maybe.map (Util.flip shootDown model) bombPosition
+                |> Maybe.withDefault model
     else
         model
 
@@ -118,11 +118,11 @@ getBombPosition index faces =
             , y = position.y + Face.height
             }
     in
-    List.map (Array.get index << Array.fromList) (List.reverse faces)
-        |> List.filter Util.isJust
-        |> List.head
-        |> Maybe.andThen identity
-        |> Maybe.map (toBombOffset << .position)
+        List.map (Array.get index << Array.fromList) (List.reverse faces)
+            |> List.filter Util.isJust
+            |> List.head
+            |> Maybe.andThen identity
+            |> Maybe.map (toBombOffset << .position)
 
 
 view : Model -> Svg.Svg a
@@ -130,6 +130,7 @@ view model =
     Svg.svg
         [ Svg.Attributes.height (String.fromFloat Screen.height)
         , Html.Attributes.style "border" "3px solid #333"
+        , Html.Attributes.style "background-color" "#fafafa"
         , Svg.Attributes.width (String.fromFloat Screen.width)
         ]
         [ Hand.toSvg model.hand.position

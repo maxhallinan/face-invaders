@@ -22,6 +22,6 @@ npm start
 - Fill empty space with new rows of space invaders
 - Gradually speed up tempo
 - Display score
-- Start, pause, and end screens
-- Instruction text
+- ~~Start, pause, and end screens~~
+- ~~Instruction text~~
 - Render sprites with WebGL
