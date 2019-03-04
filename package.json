@@ -9,7 +9,7 @@
     "elm-live": "^3.4.0"
   },
   "scripts": {
-    "start": "elm-live src/Main.elm --open --start-page=index.html",
+    "start": "elm-live src/Main.elm --open --start-page=dev-server/index.html -- --output=elm.dev.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
