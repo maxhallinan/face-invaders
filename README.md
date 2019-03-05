@@ -6,6 +6,7 @@ A little [Space Invaders](https://en.wikipedia.org/wiki/Space_Invaders) clone.
 
 - arrows to move
 - space to fire
+- enter to start, pause, and unpause
 
 ## Development
 
