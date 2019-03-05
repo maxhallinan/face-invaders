@@ -1,22 +1,14 @@
 module Main exposing (main)
 
 import Browser
-import Browser.Events exposing (onAnimationFrameDelta, onKeyDown, onKeyUp)
-import Bullet exposing (Bullet)
-import Face exposing (Face)
-import Face.Grid
 import Game
-import Grid exposing (Grid)
-import Hand exposing (Hand)
+import Game.End
+import Game.Pause
+import Game.Play
+import Game.Start
 import Html
 import Html.Attributes
-import Key exposing (Key)
-import Random
-import Screen exposing (Position)
 import String
-import Svg
-import Svg.Attributes
-import Time
 import Tuple
 import Util exposing (flip)
 
@@ -37,60 +29,102 @@ type alias Model =
     }
 
 
+type State
+    = Start
+    | Play
+    | Pause
+    | End
+
+
 type Msg
-    = KeyDown Key
-    | KeyUp Key
-    | Tick
-    | DiceRoll Int
+    = StartMsg Game.Start.Msg
+    | PlayMsg Game.Play.Msg
+    | PauseMsg Game.Pause.Msg
+    | EndMsg Game.End.Msg
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { game = Game.init, state = Start }
-    , Cmd.none
-    )
+    ( { game = Game.init, state = Start }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    let
-        defaultSubs =
-            Sub.batch
-                [ onKeyDown <| Key.decode KeyDown
-                ]
-    in
-        case model.state of
-            Start ->
-                defaultSubs
+    case model.state of
+        Start ->
+            Game.Start.subscriptions
+                |> Sub.map StartMsg
 
-            Pause ->
-                defaultSubs
+        Pause ->
+            Game.Pause.subscriptions
+                |> Sub.map PauseMsg
 
-            End ->
-                defaultSubs
+        Play ->
+            Game.Play.subscriptions
+                |> Sub.map PlayMsg
 
-            Play ->
-                Sub.batch
-                    [ onKeyDown <| Key.decode KeyDown
-                    , onKeyUp <| Key.decode KeyUp
-                    , onAnimationFrameDelta <| always Tick
-                    ]
+        End ->
+            Game.End.subscriptions
+                |> Sub.map EndMsg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        KeyDown key ->
-            handleKeyDown key model
+        StartMsg startMsg ->
+            let
+                ( ( game, event ), cmd ) =
+                    Game.Start.update startMsg model.game
+                        |> Tuple.mapSecond (Cmd.map StartMsg)
+            in
+            case event of
+                Game.Start.PlayGame ->
+                    ( { model | state = Play, game = game }, cmd )
 
-        KeyUp key ->
-            handleKeyUp key model
+                Game.Start.None ->
+                    ( { model | game = game }, cmd )
 
-        Tick ->
-            handleTick model
+        PlayMsg playMsg ->
+            let
+                ( ( game, event ), cmd ) =
+                    Game.Play.update playMsg model.game
+                        |> Tuple.mapSecond (Cmd.map PlayMsg)
+            in
+            case event of
+                Game.Play.EndGame ->
+                    ( { model | state = End, game = game }, cmd )
 
-        DiceRoll n ->
-            handleDiceRoll n model
+                Game.Play.PauseGame ->
+                    ( { model | state = Pause, game = game }, cmd )
+
+                Game.Play.None ->
+                    ( { model | game = game }, cmd )
+
+        PauseMsg pauseMsg ->
+            let
+                ( ( game, event ), cmd ) =
+                    Game.Pause.update pauseMsg model.game
+                        |> Tuple.mapSecond (Cmd.map PauseMsg)
+            in
+            case event of
+                Game.Pause.UnpauseGame ->
+                    ( { model | state = Play, game = game }, cmd )
+
+                Game.Pause.None ->
+                    ( { model | game = game }, cmd )
+
+        EndMsg endMsg ->
+            let
+                ( ( game, event ), cmd ) =
+                    Game.End.update endMsg model.game
+                        |> Tuple.mapSecond (Cmd.map EndMsg)
+            in
+            case event of
+                Game.End.NewGame ->
+                    ( { model | state = Play, game = Game.init }, cmd )
+
+                Game.End.None ->
+                    ( { model | game = game }, cmd )
 
 
 view : Model -> Html.Html Msg
@@ -109,120 +143,15 @@ helpView model =
             String.join ", "
                 [ "arrows to move"
                 , "space to shoot"
-                , enterKeyHelp model
+                , enterKeyHelp model.state
                 ]
     in
-        Html.p [] [ Html.text helpText ]
+    Html.p [] [ Html.text helpText ]
 
 
-handleKeyDown : Key -> Model -> ( Model, Cmd Msg )
-handleKeyDown key model =
-    case model.state of
-        Play ->
-            case key of
-                Key.Left ->
-                    ( { model | game = Game.moveHandLeft model.game }, Cmd.none )
-
-                Key.Right ->
-                    ( { model | game = Game.moveHandRight model.game }, Cmd.none )
-
-                Key.Space ->
-                    ( { model | game = Game.shootUp model.game }, Cmd.none )
-
-                Key.Enter ->
-                    ( handleEnterPress model
-                    , Cmd.none
-                    )
-
-                Key.Other ->
-                    ( model, Cmd.none )
-
-        _ ->
-            case key of
-                Key.Enter ->
-                    ( handleEnterPress model
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
-
-
-handleKeyUp : Key -> Model -> ( Model, Cmd Msg )
-handleKeyUp key model =
-    case model.state of
-        Play ->
-            case key of
-                Key.Left ->
-                    ( { model | game = Game.stopHand model.game }, Cmd.none )
-
-                Key.Right ->
-                    ( { model | game = Game.stopHand model.game }, Cmd.none )
-
-                Key.Space ->
-                    ( model, Cmd.none )
-
-                Key.Enter ->
-                    ( model, Cmd.none )
-
-                Key.Other ->
-                    ( model, Cmd.none )
-
-        _ ->
-            ( model, Cmd.none )
-
-
-handleTick : Model -> ( Model, Cmd Msg )
-handleTick model =
-    case model.state of
-        Play ->
-            ( { model | game = Game.animate model.game }, rollDice )
-
-        _ ->
-            ( model, Cmd.none )
-
-
-handleDiceRoll : Int -> Model -> ( Model, Cmd Msg )
-handleDiceRoll n model =
-    case model.state of
-        Play ->
-            ( { model | game = Game.dropBomb n model.game }, Cmd.none )
-
-        _ ->
-            ( model, Cmd.none )
-
-
-rollDice : Cmd Msg
-rollDice =
-    Random.generate DiceRoll <| Random.int 0 560
-
-
-type State
-    = Start
-    | Play
-    | Pause
-    | End
-
-
-handleEnterPress : Model -> Model
-handleEnterPress model =
-    case model.state of
-        Start ->
-            { model | state = Play }
-
-        Play ->
-            { model | state = Pause }
-
-        Pause ->
-            { model | state = Play }
-
-        End ->
-            { model | game = Game.init, state = Play }
-
-
-enterKeyHelp : Model -> String
-enterKeyHelp model =
-    case model.state of
+enterKeyHelp : State -> String
+enterKeyHelp state =
+    case state of
         Start ->
             "enter to start"
 

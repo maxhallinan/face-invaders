@@ -1,4 +1,6 @@
-module Util exposing (flip, isJust, isNothing)
+module Util exposing (decodeKey, flip, isJust, isNothing)
+
+import Json.Decode
 
 
 flip : (a -> b -> c) -> (b -> a -> c)
@@ -14,3 +16,9 @@ isNothing m =
 isJust : Maybe a -> Bool
 isJust =
     not << isNothing
+
+
+decodeKey : (String -> a) -> Json.Decode.Decoder a
+decodeKey toKey =
+    Json.Decode.field "key" Json.Decode.string
+        |> Json.Decode.map toKey
