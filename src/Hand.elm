@@ -2,16 +2,16 @@ module Hand
     exposing
         ( Direction(..)
         , Hand
+        , Health(..)
         , animate
-        , height
         , init
         , move
+        , size
         , toSvg
-        , width
         )
 
 import Html.Attributes
-import Screen exposing (Position)
+import Screen exposing (Position, Size)
 import Svg exposing (Svg)
 import Svg.Attributes
 import Task
@@ -19,6 +19,7 @@ import Task
 
 type alias Hand =
     { direction : Direction
+    , health : Health
     , position : Position
     }
 
@@ -29,20 +30,31 @@ type Direction
     | Stop
 
 
+type Health
+    = Alive
+    | Dead
+
+
 init : Hand
 init =
     let
         x =
             -- horizontal center
-            (Screen.width / 2) - (width / 2)
+            (Screen.size.width / 2) - (width / 2)
 
         y =
             -- near the bottom of the screen
-            Screen.height - (height + 6)
+            Screen.size.height - (height + 6)
     in
     { direction = Stop
+    , health = Alive
     , position = { x = x, y = y }
     }
+
+
+size : Size
+size =
+    { height = height, width = width }
 
 
 height : Float
@@ -106,7 +118,7 @@ increaseXPositionBy amount position =
             0
 
         rightEdge =
-            Screen.width - width
+            Screen.size.width - width
 
         next =
             position.x + amount

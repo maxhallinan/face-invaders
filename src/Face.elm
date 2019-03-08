@@ -2,16 +2,17 @@ module Face
     exposing
         ( Direction(..)
         , Face
-        , height
+        , Health(..)
         , init
+        , isAlive
         , isDead
         , reverseDirection
+        , size
         , toSvg
-        , width
         )
 
 import Grid exposing (Grid)
-import Screen exposing (Position)
+import Screen exposing (Position, Size)
 import Svg exposing (Svg)
 import Svg.Attributes
 import Task
@@ -47,6 +48,11 @@ isDead face =
     face.health == Dead
 
 
+isAlive : Face -> Bool
+isAlive =
+    not << isDead
+
+
 height : Float
 height =
     51
@@ -55,6 +61,11 @@ height =
 width : Float
 width =
     48
+
+
+size : Size
+size =
+    { height = height, width = width }
 
 
 reverseDirection : Face -> Face

@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser
-import Game
+import Game exposing (Game)
 import Game.End
 import Game.Pause
 import Game.Play
@@ -24,7 +24,7 @@ main =
 
 
 type alias Model =
-    { game : Game.Model
+    { game : Game
     , state : State
     }
 

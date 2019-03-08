@@ -1,7 +1,7 @@
 module Game.End exposing (Event(..), Msg(..), subscriptions, update)
 
 import Browser.Events exposing (onKeyDown)
-import Game
+import Game exposing (Game)
 import Util
 
 
@@ -19,7 +19,7 @@ type Key
     | Other
 
 
-update : Msg -> Game.Model -> ( ( Game.Model, Event ), Cmd Msg )
+update : Msg -> Game -> ( ( Game, Event ), Cmd Msg )
 update msg model =
     case msg of
         KeyDown Enter ->

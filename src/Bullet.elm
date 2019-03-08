@@ -2,20 +2,23 @@ module Bullet
     exposing
         ( Bullet
         , animate
-        , height
+        , isDirection
+        , isDirectionDown
+        , isDirectionUp
         , shootDown
         , shootUp
+        , size
         , toSvg
-        , width
         )
 
-import Screen exposing (Position)
+import Screen exposing (Position, Size)
 import Svg exposing (Svg)
 import Svg.Attributes
 
 
 type alias Bullet =
     { direction : Direction
+    , hits : Int
     , position : Position
     }
 
@@ -28,6 +31,7 @@ type Direction
 shootDown : Position -> Bullet
 shootDown position =
     { direction = Down
+    , hits = 0
     , position = position
     }
 
@@ -35,8 +39,24 @@ shootDown position =
 shootUp : Position -> Bullet
 shootUp position =
     { direction = Up
+    , hits = 0
     , position = position
     }
+
+
+isDirectionDown : Bullet -> Bool
+isDirectionDown =
+    isDirection Down
+
+
+isDirectionUp : Bullet -> Bool
+isDirectionUp =
+    isDirection Up
+
+
+isDirection : Direction -> Bullet -> Bool
+isDirection direction bullet =
+    direction == bullet.direction
 
 
 height : Float
@@ -47,6 +67,11 @@ height =
 width : Float
 width =
     6
+
+
+size : Size
+size =
+    { height = height, width = width }
 
 
 toSvg : Position -> Svg a

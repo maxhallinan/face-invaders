@@ -16,22 +16,22 @@ init direction =
             9
 
         rowWidth =
-            rowLength * (Face.width + spacing)
+            rowLength * (Face.size.width + spacing)
 
         leftOffset =
-            (Screen.width - rowWidth) / 2
+            (Screen.size.width - rowWidth) / 2
 
         xs =
             List.range 0 (rowLength - 1)
                 |> List.map toFloat
-                |> List.map ((*) (Face.width + spacing))
+                |> List.map ((*) (Face.size.width + spacing))
                 -- center in screen
                 |> List.map ((+) leftOffset)
 
         ys =
             List.range 0 3
                 |> List.map toFloat
-                |> List.map ((*) (Face.height + spacing))
+                |> List.map ((*) (Face.size.height + spacing))
                 -- start 6 pixels from the top edge of the screen
                 |> List.map ((+) 6)
 
@@ -84,7 +84,7 @@ moveFaces leftMost rightMost faces =
             (leftMost.x + negate x) <= 0
 
         atRightEdge =
-            (rightMost.x + Face.width + x) >= Screen.width
+            (rightMost.x + Face.size.width + x) >= Screen.size.width
 
         reverse =
             increasePositionBy ( x, y ) << reverseDirection

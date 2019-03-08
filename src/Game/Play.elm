@@ -1,7 +1,7 @@
 module Game.Play exposing (Event(..), Msg(..), subscriptions, update)
 
 import Browser.Events exposing (onAnimationFrameDelta, onKeyDown, onKeyUp)
-import Game
+import Game exposing (Game)
 import Random
 import Util
 
@@ -19,7 +19,7 @@ type Event
     | None
 
 
-update : Msg -> Game.Model -> ( ( Game.Model, Event ), Cmd Msg )
+update : Msg -> Game -> ( ( Game, Event ), Cmd Msg )
 update msg game =
     case msg of
         KeyDown key ->
@@ -74,7 +74,7 @@ toKey k =
             Other
 
 
-handleKeyDown : Key -> Game.Model -> ( ( Game.Model, Event ), Cmd Msg )
+handleKeyDown : Key -> Game -> ( ( Game, Event ), Cmd Msg )
 handleKeyDown key game =
     case key of
         Left ->
@@ -93,7 +93,7 @@ handleKeyDown key game =
             ( ( game, None ), Cmd.none )
 
 
-handleKeyUp : Key -> Game.Model -> ( ( Game.Model, Event ), Cmd Msg )
+handleKeyUp : Key -> Game -> ( ( Game, Event ), Cmd Msg )
 handleKeyUp key game =
     case key of
         Left ->
@@ -112,12 +112,12 @@ handleKeyUp key game =
             ( ( game, None ), Cmd.none )
 
 
-handleTick : Game.Model -> ( ( Game.Model, Event ), Cmd Msg )
+handleTick : Game -> ( ( Game, Event ), Cmd Msg )
 handleTick game =
     ( ( Game.animate game, None ), rollDice )
 
 
-handleDiceRoll : Int -> Game.Model -> ( ( Game.Model, Event ), Cmd Msg )
+handleDiceRoll : Int -> Game -> ( ( Game, Event ), Cmd Msg )
 handleDiceRoll n game =
     ( ( Game.dropBomb n game, None ), Cmd.none )
 
