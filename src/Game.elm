@@ -298,26 +298,31 @@ toScore game =
         |> List.length
 
 
-view : Game -> Svg.Svg a
+view : Game -> Html a
 view game =
+    Html.div
+        []
+        [ screenView game
+        , scoreView game
+        ]
+
+
+screenView : Game -> Html a
+screenView game =
     let
         faces =
             Grid.toList game.faces
                 |> List.filter Face.isAlive
     in
-    Html.div
-        []
-        [ Svg.svg
-            [ Svg.Attributes.height (String.fromFloat Screen.size.height)
-            , Html.Attributes.style "border" "3px solid #333"
-            , Html.Attributes.style "background-color" "#fafafa"
-            , Svg.Attributes.width (String.fromFloat Screen.size.width)
-            ]
-            [ Hand.toSvg game.hand.position
-            , Svg.g [] <| List.map (Face.toSvg << .position) faces
-            , Svg.g [] <| List.map (Bullet.toSvg << .position) game.bullets
-            ]
-        , scoreView game
+    Svg.svg
+        [ Svg.Attributes.height (String.fromFloat Screen.size.height)
+        , Html.Attributes.style "border" "3px solid #333"
+        , Html.Attributes.style "background-color" "#fafafa"
+        , Svg.Attributes.width (String.fromFloat Screen.size.width)
+        ]
+        [ Hand.toSvg game.hand.position
+        , Svg.g [] <| List.map (Face.toSvg << .position) faces
+        , Svg.g [] <| List.map (Bullet.toSvg << .position) game.bullets
         ]
 
 
