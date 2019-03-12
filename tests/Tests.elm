@@ -58,18 +58,16 @@ testDetectDeadFaces =
 
 expectDeadFace : Position -> Position -> Expectation
 expectDeadFace facePos bulletPos =
-    isFace Face.isDead facePos bulletPos
-        |> Expect.true "Expected the face to be dead"
+    expectFace Face.isDead facePos bulletPos
 
 
 expectAliveFace : Position -> Position -> Expectation
 expectAliveFace facePos bulletPos =
-    isFace Face.isAlive facePos bulletPos
-        |> Expect.true "Expected the face to be dead"
+    expectFace Face.isAlive facePos bulletPos
 
 
-isFace : (Face -> Bool) -> Position -> Position -> Bool
-isFace predicate facePos bulletPos =
+expectFace : (Face -> Bool) -> Position -> Position -> Expectation
+expectFace predicate facePos bulletPos =
     let
         face =
             Face.init Face.Right facePos
@@ -90,3 +88,4 @@ isFace predicate facePos bulletPos =
         |> Maybe.andThen List.head
         |> Maybe.map predicate
         |> Maybe.withDefault False
+        |> Expect.true "Expected the face to be dead"

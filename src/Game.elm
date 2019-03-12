@@ -2,6 +2,7 @@ module Game
     exposing
         ( Game
         , animate
+        , countBulletHits
         , detectDeadFaces
         , dropBomb
         , init
@@ -19,7 +20,7 @@ import Face.Grid
 import Grid exposing (Grid)
 import Hand exposing (Hand)
 import Html.Attributes
-import Screen exposing (Position)
+import Screen exposing (Position, Size)
 import Svg
 import Svg.Attributes
 import Util
@@ -81,8 +82,54 @@ animate game =
         , faces = Face.Grid.animate game.faces
         , hand = Hand.animate game.hand
     }
+        |> countBulletHits
         |> detectDeadFaces
         |> collectGarbage
+
+
+detectDeadHand : Game -> Game
+detectDeadHand game =
+    game
+
+
+countBulletHits : Game -> Game
+countBulletHits =
+    countBulletFaceHits >> countBulletHandHits
+
+
+countBulletHandHits : Game -> Game
+countBulletHandHits game =
+    let
+        handLocation =
+            ( Hand.size, game.hand.position )
+    in
+    { game | bullets = List.map (countHit [ handLocation ]) game.bullets }
+
+
+countBulletFaceHits : Game -> Game
+countBulletFaceHits game =
+    let
+        faceLocations =
+            Grid.filter (not << Face.isDead) game.faces
+                |> Grid.map (Tuple.pair Face.size << .position)
+                |> Grid.toList
+    in
+    { game | bullets = List.map (countHit faceLocations) game.bullets }
+
+
+countHit : List ( Size, Position ) -> Bullet -> Bullet
+countHit locations bullet =
+    let
+        bulletLocation =
+            ( Bullet.size, bullet.position )
+
+        isCollision =
+            List.any (Screen.isCollision bulletLocation) locations
+    in
+    if isCollision then
+        { bullet | hits = bullet.hits + 1 }
+    else
+        bullet
 
 
 detectDeadFaces : Game -> Game
@@ -123,8 +170,13 @@ isFaceHit bullet face =
 collectGarbage : Game -> Game
 collectGarbage game =
     { game
-        | bullets = List.filter (not << Screen.isOffScreen << .position) game.bullets
+        | bullets = List.filter (not << isBulletGarbage) game.bullets
     }
+
+
+isBulletGarbage : Bullet -> Bool
+isBulletGarbage bullet =
+    Screen.isOffScreen bullet.position || bullet.hits >= 1
 
 
 dropBomb : Int -> Game -> Game
