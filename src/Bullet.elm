@@ -1,6 +1,7 @@
 module Bullet
     exposing
         ( Bullet
+        , Direction(..)
         , animate
         , isDirection
         , isDirectionDown
@@ -108,9 +109,9 @@ animate bullet =
         position =
             bullet.position
     in
-    case bullet.direction of
-        Up ->
-            { bullet | position = { position | y = position.y - 6 } }
+        case bullet.direction of
+            Up ->
+                { bullet | position = { position | y = position.y - 6 } }
 
-        Down ->
-            { bullet | position = { position | y = position.y + 6 } }
+            Down ->
+                { bullet | position = { position | y = position.y + 6 } }

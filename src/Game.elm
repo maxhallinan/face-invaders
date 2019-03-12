@@ -75,7 +75,7 @@ shootUp game =
         bullet =
             Bullet.shootUp position
     in
-    { game | bullets = bullet :: game.bullets }
+        { game | bullets = bullet :: game.bullets }
 
 
 animate : Game -> Game
@@ -112,7 +112,7 @@ detectHandHitByFace game =
         hand =
             detectHandHit faceLocations game.hand
     in
-    { game | hand = hand }
+        { game | hand = hand }
 
 
 detectHandHitByBullet : Game -> Game
@@ -125,7 +125,7 @@ detectHandHitByBullet game =
         hand =
             detectHandHit bulletLocations game.hand
     in
-    { game | hand = hand }
+        { game | hand = hand }
 
 
 detectFaceTouchGround : Game -> Game
@@ -137,10 +137,10 @@ detectFaceTouchGround game =
         hand =
             game.hand
     in
-    if List.any Screen.isOffScreenBottom faceLocations then
-        { game | hand = { hand | health = Hand.Dead } }
-    else
-        game
+        if List.any Screen.isOffScreenBottom faceLocations then
+            { game | hand = { hand | health = Hand.Dead } }
+        else
+            game
 
 
 toBulletLocations : List Bullet -> List Location
@@ -171,7 +171,7 @@ detectHandHit locations hand =
             else
                 h
     in
-    List.foldl detectHit hand locations
+        List.foldl detectHit hand locations
 
 
 countBulletHits : Game -> Game
@@ -185,7 +185,7 @@ countBulletHandHits game =
         handLocation =
             Hand.toLocation game.hand.position
     in
-    { game | bullets = List.map (countHit [ handLocation ]) game.bullets }
+        { game | bullets = List.map (countHit [ handLocation ] Bullet.Down) game.bullets }
 
 
 countBulletFaceHits : Game -> Game
@@ -196,11 +196,11 @@ countBulletFaceHits game =
                 |> Grid.map (Face.toLocation << .position)
                 |> Grid.toList
     in
-    { game | bullets = List.map (countHit faceLocations) game.bullets }
+        { game | bullets = List.map (countHit faceLocations Bullet.Up) game.bullets }
 
 
-countHit : List Location -> Bullet -> Bullet
-countHit locations bullet =
+countHit : List Location -> Bullet.Direction -> Bullet -> Bullet
+countHit locations direction bullet =
     let
         bulletLocation =
             Bullet.toLocation bullet.position
@@ -208,10 +208,10 @@ countHit locations bullet =
         isCollision =
             List.any (Screen.isCollision bulletLocation) locations
     in
-    if isCollision then
-        { bullet | hits = bullet.hits + 1 }
-    else
-        bullet
+        if isCollision && direction == bullet.direction then
+            { bullet | hits = bullet.hits + 1 }
+        else
+            bullet
 
 
 detectDeadFaces : Game -> Game
@@ -223,7 +223,7 @@ detectDeadFaces game =
         faces =
             Grid.map (detectDeadFace bullets) game.faces
     in
-    { game | faces = faces }
+        { game | faces = faces }
 
 
 detectDeadFace : List Bullet -> Face -> Face
@@ -251,7 +251,7 @@ isFaceHit bullet face =
         faceLocation =
             Face.toLocation face.position
     in
-    Screen.isCollision bulletLocation faceLocation
+        Screen.isCollision bulletLocation faceLocation
 
 
 collectGarbage : Game -> Game
@@ -278,8 +278,8 @@ dropBomb n game =
             shootDown position m =
                 { m | bullets = Bullet.shootDown position :: m.bullets }
         in
-        Maybe.map (Util.flip shootDown game) bombPosition
-            |> Maybe.withDefault game
+            Maybe.map (Util.flip shootDown game) bombPosition
+                |> Maybe.withDefault game
     else
         game
 
@@ -294,11 +294,11 @@ getBombPosition index faces =
             , y = position.y + Face.size.height
             }
     in
-    List.map (Array.get index << Array.fromList) (List.reverse faces)
-        |> List.filter (Maybe.withDefault False << Maybe.map Face.isAlive)
-        |> List.head
-        |> Maybe.andThen identity
-        |> Maybe.map (toBombOffset << .position)
+        List.map (Array.get index << Array.fromList) (List.reverse faces)
+            |> List.filter (Maybe.withDefault False << Maybe.map Face.isAlive)
+            |> List.head
+            |> Maybe.andThen identity
+            |> Maybe.map (toBombOffset << .position)
 
 
 toScore : Game -> Int
@@ -324,16 +324,16 @@ screenView game =
             Grid.toList game.faces
                 |> List.filter Face.isAlive
     in
-    Svg.svg
-        [ Svg.Attributes.height (String.fromFloat Screen.size.height)
-        , Html.Attributes.style "border" "3px solid #333"
-        , Html.Attributes.style "background-color" "#fafafa"
-        , Svg.Attributes.width (String.fromFloat Screen.size.width)
-        ]
-        [ Hand.toSvg game.hand.position
-        , Svg.g [] <| List.map (Face.toSvg << .position) faces
-        , Svg.g [] <| List.map (Bullet.toSvg << .position) game.bullets
-        ]
+        Svg.svg
+            [ Svg.Attributes.height (String.fromFloat Screen.size.height)
+            , Html.Attributes.style "border" "3px solid #333"
+            , Html.Attributes.style "background-color" "#fafafa"
+            , Svg.Attributes.width (String.fromFloat Screen.size.width)
+            ]
+            [ Hand.toSvg game.hand.position
+            , Svg.g [] <| List.map (Face.toSvg << .position) faces
+            , Svg.g [] <| List.map (Bullet.toSvg << .position) game.bullets
+            ]
 
 
 scoreView : Game -> Html a
@@ -346,4 +346,4 @@ scoreView game =
                 , String.fromInt <| toScore game
                 ]
     in
-    Html.p [] [ Html.text score ]
+        Html.p [] [ Html.text score ]
