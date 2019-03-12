@@ -19,10 +19,10 @@ npm start
 
 ### Todo
 
-- Bullet/bomb collision detection
+- ~~Bullet/bomb collision detection~~
 - Fill empty space with new rows of space invaders
 - Gradually speed up tempo
-- Display score
+- ~~Display score~~
 - ~~Start, pause, and end screens~~
 - ~~Instruction text~~
 - Render sprites with WebGL
