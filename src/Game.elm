@@ -19,8 +19,10 @@ import Face exposing (Face)
 import Face.Grid
 import Grid exposing (Grid)
 import Hand exposing (Hand)
+import Html exposing (Html)
 import Html.Attributes
 import Screen exposing (Position, Size)
+import String
 import Svg
 import Svg.Attributes
 import Util
@@ -289,6 +291,13 @@ getBombPosition index faces =
         |> Maybe.map (toBombOffset << .position)
 
 
+toScore : Game -> Int
+toScore game =
+    Grid.filter Face.isDead game.faces
+        |> Grid.toList
+        |> List.length
+
+
 view : Game -> Svg.Svg a
 view game =
     let
@@ -296,13 +305,30 @@ view game =
             Grid.toList game.faces
                 |> List.filter Face.isAlive
     in
-    Svg.svg
-        [ Svg.Attributes.height (String.fromFloat Screen.size.height)
-        , Html.Attributes.style "border" "3px solid #333"
-        , Html.Attributes.style "background-color" "#fafafa"
-        , Svg.Attributes.width (String.fromFloat Screen.size.width)
+    Html.div
+        []
+        [ Svg.svg
+            [ Svg.Attributes.height (String.fromFloat Screen.size.height)
+            , Html.Attributes.style "border" "3px solid #333"
+            , Html.Attributes.style "background-color" "#fafafa"
+            , Svg.Attributes.width (String.fromFloat Screen.size.width)
+            ]
+            [ Hand.toSvg game.hand.position
+            , Svg.g [] <| List.map (Face.toSvg << .position) faces
+            , Svg.g [] <| List.map (Bullet.toSvg << .position) game.bullets
+            ]
+        , scoreView game
         ]
-        [ Hand.toSvg game.hand.position
-        , Svg.g [] <| List.map (Face.toSvg << .position) faces
-        , Svg.g [] <| List.map (Bullet.toSvg << .position) game.bullets
-        ]
+
+
+scoreView : Game -> Html a
+scoreView game =
+    let
+        score =
+            String.join
+                " "
+                [ "Score:"
+                , String.fromInt <| toScore game
+                ]
+    in
+    Html.p [] [ Html.text score ]
