@@ -8,10 +8,11 @@ module Bullet
         , shootDown
         , shootUp
         , size
+        , toLocation
         , toSvg
         )
 
-import Screen exposing (Position, Size)
+import Screen exposing (Location, Position, Size)
 import Svg exposing (Svg)
 import Svg.Attributes
 
@@ -72,6 +73,11 @@ width =
 size : Size
 size =
     { height = height, width = width }
+
+
+toLocation : Position -> Location
+toLocation =
+    Screen.toLocation size
 
 
 toSvg : Position -> Svg a

@@ -2,6 +2,7 @@ module Game
     exposing
         ( Game
         , animate
+        , applyLogic
         , countBulletHits
         , detectDeadFaces
         , dropBomb
@@ -21,7 +22,7 @@ import Grid exposing (Grid)
 import Hand exposing (Hand)
 import Html exposing (Html)
 import Html.Attributes
-import Screen exposing (Position, Size)
+import Screen exposing (Location, Position, Size)
 import String
 import Svg
 import Svg.Attributes
@@ -84,10 +85,14 @@ animate game =
         , faces = Face.Grid.animate game.faces
         , hand = Hand.animate game.hand
     }
-        |> countBulletHits
-        |> detectDeadFaces
-        |> detectDeadHand
-        |> collectGarbage
+
+
+applyLogic : Game -> Game
+applyLogic =
+    countBulletHits
+        >> detectDeadFaces
+        >> detectDeadHand
+        >> collectGarbage
 
 
 detectDeadHand : Game -> Game
@@ -138,28 +143,28 @@ detectFaceTouchGround game =
         game
 
 
-toBulletLocations : List Bullet -> List ( Size, Position )
+toBulletLocations : List Bullet -> List Location
 toBulletLocations =
     toLocation Bullet.size
 
 
-toFaceLocations : List Face -> List ( Size, Position )
+toFaceLocations : List Face -> List Location
 toFaceLocations =
     toLocation Face.size
 
 
-toLocation : Size -> List { a | position : Position } -> List ( Size, Position )
+toLocation : Size -> List { a | position : Position } -> List Location
 toLocation size xs =
-    List.map (Tuple.pair size << .position) xs
+    List.map (Screen.toLocation size << .position) xs
 
 
-detectHandHit : List ( Size, Position ) -> Hand -> Hand
+detectHandHit : List Location -> Hand -> Hand
 detectHandHit locations hand =
     let
         handLocation =
-            ( Hand.size, hand.position )
+            Hand.toLocation hand.position
 
-        detectHit : ( Size, Position ) -> Hand -> Hand
+        detectHit : Location -> Hand -> Hand
         detectHit location h =
             if Screen.isCollision location handLocation then
                 { h | health = Hand.Dead }
@@ -178,7 +183,7 @@ countBulletHandHits : Game -> Game
 countBulletHandHits game =
     let
         handLocation =
-            ( Hand.size, game.hand.position )
+            Hand.toLocation game.hand.position
     in
     { game | bullets = List.map (countHit [ handLocation ]) game.bullets }
 
@@ -188,17 +193,17 @@ countBulletFaceHits game =
     let
         faceLocations =
             Grid.filter (not << Face.isDead) game.faces
-                |> Grid.map (Tuple.pair Face.size << .position)
+                |> Grid.map (Face.toLocation << .position)
                 |> Grid.toList
     in
     { game | bullets = List.map (countHit faceLocations) game.bullets }
 
 
-countHit : List ( Size, Position ) -> Bullet -> Bullet
+countHit : List Location -> Bullet -> Bullet
 countHit locations bullet =
     let
         bulletLocation =
-            ( Bullet.size, bullet.position )
+            Bullet.toLocation bullet.position
 
         isCollision =
             List.any (Screen.isCollision bulletLocation) locations
@@ -239,9 +244,14 @@ toDeadIfHit bullet face =
 
 isFaceHit : Bullet -> Face -> Bool
 isFaceHit bullet face =
-    Screen.isCollision
-        ( Bullet.size, bullet.position )
-        ( Face.size, face.position )
+    let
+        bulletLocation =
+            Bullet.toLocation bullet.position
+
+        faceLocation =
+            Face.toLocation face.position
+    in
+    Screen.isCollision bulletLocation faceLocation
 
 
 collectGarbage : Game -> Game

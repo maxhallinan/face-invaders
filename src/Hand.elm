@@ -7,11 +7,12 @@ module Hand
         , init
         , move
         , size
+        , toLocation
         , toSvg
         )
 
 import Html.Attributes
-import Screen exposing (Position, Size)
+import Screen exposing (Location, Position, Size)
 import Svg exposing (Svg)
 import Svg.Attributes
 import Task
@@ -65,6 +66,11 @@ height =
 width : Float
 width =
     45
+
+
+toLocation : Position -> Location
+toLocation =
+    Screen.toLocation size
 
 
 toSvg : Position -> Svg a

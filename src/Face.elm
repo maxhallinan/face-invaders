@@ -8,11 +8,12 @@ module Face
         , isDead
         , reverseDirection
         , size
+        , toLocation
         , toSvg
         )
 
 import Grid exposing (Grid)
-import Screen exposing (Position, Size)
+import Screen exposing (Location, Position, Size)
 import Svg exposing (Svg)
 import Svg.Attributes
 import Task
@@ -61,6 +62,11 @@ height =
 width : Float
 width =
     48
+
+
+toLocation : Position -> Location
+toLocation =
+    Screen.toLocation size
 
 
 size : Size

@@ -118,6 +118,7 @@ handleTick game =
     let
         updated =
             Game.animate game
+                |> Game.applyLogic
     in
     case updated.hand.health of
         Hand.Alive ->
