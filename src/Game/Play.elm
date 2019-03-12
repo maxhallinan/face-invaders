@@ -2,6 +2,7 @@ module Game.Play exposing (Event(..), Msg(..), subscriptions, update)
 
 import Browser.Events exposing (onAnimationFrameDelta, onKeyDown, onKeyUp)
 import Game exposing (Game)
+import Hand
 import Random
 import Util
 
@@ -114,7 +115,16 @@ handleKeyUp key game =
 
 handleTick : Game -> ( ( Game, Event ), Cmd Msg )
 handleTick game =
-    ( ( Game.animate game, None ), rollDice )
+    let
+        updated =
+            Game.animate game
+    in
+    case updated.hand.health of
+        Hand.Alive ->
+            ( ( updated, None ), rollDice )
+
+        Hand.Dead ->
+            ( ( updated, EndGame ), Cmd.none )
 
 
 handleDiceRoll : Int -> Game -> ( ( Game, Event ), Cmd Msg )

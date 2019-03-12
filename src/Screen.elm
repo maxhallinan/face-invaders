@@ -39,7 +39,7 @@ isOffScreen { x, y } =
 
 isOffScreenBottom : ( Size, Position ) -> Bool
 isOffScreenBottom ( s, p ) =
-    p.x >= height || (p.x + s.height) >= height
+    p.y >= height || (p.y + s.height) >= height
 
 
 isCollision : ( Size, Position ) -> ( Size, Position ) -> Bool

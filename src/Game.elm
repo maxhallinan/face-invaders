@@ -90,7 +90,9 @@ animate game =
 
 detectDeadHand : Game -> Game
 detectDeadHand =
-    detectHandHitByBullet >> detectHandHitByFace >> detectFaceTouchGround
+    detectHandHitByBullet
+        >> detectHandHitByFace
+        >> detectFaceTouchGround
 
 
 detectHandHitByFace : Game -> Game
