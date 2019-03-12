@@ -4,6 +4,7 @@ module Screen
         , Size
         , isCollision
         , isOffScreen
+        , isOffScreenBottom
         , size
         )
 
@@ -34,6 +35,11 @@ width =
 isOffScreen : Position -> Bool
 isOffScreen { x, y } =
     x <= 0 || x >= width || y <= 0 || y >= height
+
+
+isOffScreenBottom : ( Size, Position ) -> Bool
+isOffScreenBottom ( s, p ) =
+    p.x >= height || (p.x + s.height) >= height
 
 
 isCollision : ( Size, Position ) -> ( Size, Position ) -> Bool

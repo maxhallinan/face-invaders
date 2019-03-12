@@ -84,12 +84,85 @@ animate game =
     }
         |> countBulletHits
         |> detectDeadFaces
+        |> detectDeadHand
         |> collectGarbage
 
 
 detectDeadHand : Game -> Game
-detectDeadHand game =
-    game
+detectDeadHand =
+    detectHandHitByBullet >> detectHandHitByFace >> detectFaceTouchGround
+
+
+detectHandHitByFace : Game -> Game
+detectHandHitByFace game =
+    let
+        faceLocations =
+            Grid.toList game.faces
+                |> toFaceLocations
+
+        hand =
+            detectHandHit faceLocations game.hand
+    in
+    { game | hand = hand }
+
+
+detectHandHitByBullet : Game -> Game
+detectHandHitByBullet game =
+    let
+        bulletLocations =
+            List.filter Bullet.isDirectionDown game.bullets
+                |> toBulletLocations
+
+        hand =
+            detectHandHit bulletLocations game.hand
+    in
+    { game | hand = hand }
+
+
+detectFaceTouchGround : Game -> Game
+detectFaceTouchGround game =
+    let
+        faceLocations =
+            Grid.toList game.faces |> toFaceLocations
+
+        hand =
+            game.hand
+    in
+    if List.any Screen.isOffScreenBottom faceLocations then
+        { game | hand = { hand | health = Hand.Dead } }
+    else
+        game
+
+
+toBulletLocations : List Bullet -> List ( Size, Position )
+toBulletLocations =
+    toLocation Bullet.size
+
+
+toFaceLocations : List Face -> List ( Size, Position )
+toFaceLocations =
+    toLocation Face.size
+
+
+toLocation : Size -> List { a | position : Position } -> List ( Size, Position )
+toLocation size xs =
+    List.map (Tuple.pair size << .position) xs
+
+
+detectHandHit : List ( Size, Position ) -> Hand -> Hand
+detectHandHit locations hand =
+    let
+        handLocation =
+            ( Hand.size, hand.position )
+
+        detectHit : ( Size, Position ) -> Hand -> Hand
+        detectHit location h =
+            if Screen.isCollision location handLocation then
+                { h | health = Hand.Dead }
+            else
+                h
+    in
+    List.foldl detectHit hand locations
 
 
 countBulletHits : Game -> Game
